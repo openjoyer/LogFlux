@@ -1,0 +1,26 @@
+postgres:
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+  database: ${INGESTION_POSTGRES_DATABASE}
+
+http:
+  address: ${INGESTION_HTTP_ADDRESS}
+  port: ${INGESTION_HTTP_PORT}
+
+redis:
+  address: ${REDIS_ADDRESS}
+  db: ${INGESTION_REDIS_DB}
+  password: ${LOGFLUX_REDIS_PASSWORD}
+  dial_timeout: ${INGESTION_REDIS_DIAL_TIMEOUT}
+  read_timeout: ${INGESTION_REDIS_READ_TIMEOUT}
+  write_timeout: ${INGESTION_REDIS_WRITE_TIMEOUT}
+
+kafka:
+  brokers:
+    - ${KAFKA_BROKER}
+  topic: ${KAFKA_TOPIC}
+  client_id: ${INGESTION_KAFKA_CLIENT_ID}
+  batch_timeout: ${INGESTION_KAFKA_BATCH_TIMEOUT}
+  write_timeout: ${INGESTION_KAFKA_WRITE_TIMEOUT}

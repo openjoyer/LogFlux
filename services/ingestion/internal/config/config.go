@@ -51,12 +51,45 @@ func Load(path string) (Config, error) {
 		return Config{}, fmt.Errorf("read config: %w", err)
 	}
 
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	var document yaml.Node
+	if err := yaml.Unmarshal(data, &document); err != nil {
 		return Config{}, fmt.Errorf("parse config: %w", err)
 	}
 
-	cfg.Redis.Password = os.Getenv("LOGFLUX_REDIS_PASSWORD")
+	if err := expandEnvironment(&document); err != nil {
+		return Config{}, err
+	}
+
+	var cfg Config
+	if err := document.Decode(&cfg); err != nil {
+		return Config{}, fmt.Errorf("decode config: %w", err)
+	}
 
 	return cfg, nil
+}
+
+func expandEnvironment(node *yaml.Node) error {
+	if node.Kind == yaml.ScalarNode && node.Tag == "!!str" {
+		var missing string
+		expanded := os.Expand(node.Value, func(key string) string {
+			value, ok := os.LookupEnv(key)
+			if !ok && missing == "" {
+				missing = key
+			}
+			return value
+		})
+		if missing != "" {
+			return fmt.Errorf("missing environment variable: %s", missing)
+		}
+		if expanded != node.Value {
+			node.Value = expanded
+			node.Tag = ""
+		}
+	}
+	for _, child := range node.Content {
+		if err := expandEnvironment(child); err != nil {
+			return err
+		}
+	}
+	return nil
 }

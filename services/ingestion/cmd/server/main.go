@@ -23,6 +23,12 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("service", "ingestion")
+
+	slog.SetDefault(logger)
+
 	if err := run(); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
