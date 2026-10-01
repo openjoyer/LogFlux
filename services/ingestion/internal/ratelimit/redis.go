@@ -16,10 +16,10 @@ const (
 
 type Limiter struct {
 	redisClient *redis.Client
-	limit       int64
+	limit       int
 }
 
-func NewLimiter(client *redis.Client, limit int64) *Limiter {
+func NewLimiter(client *redis.Client, limit int) *Limiter {
 	return &Limiter{client, limit}
 }
 
@@ -32,7 +32,7 @@ func (l *Limiter) Allow(ctx context.Context, projectID string) (bool, error) {
 		return false, fmt.Errorf("failed to increment rate limit: %w", err)
 	}
 
-	return value <= l.limit, nil
+	return int(value) <= l.limit, nil
 }
 
 func (l *Limiter) increment(ctx context.Context, key string) (int64, error) {
