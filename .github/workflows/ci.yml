@@ -1,0 +1,41 @@
+name: LogFlux CI
+on:
+  push:
+    branches: [ main, develop, "feature/**", "hotfix/**" ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Download dependencies
+        run: go mod download
+      - name: Check formatting
+        run: |
+          files=$(gofmt -l services contracts)
+          if [ -n "$files" ]; then
+            echo "Format these files with gofmt:"
+            echo "$files"
+            exit 1
+          fi
+      - name: Static analysis
+        run: go vet ./...
+
+      - name: Tests
+        run: go test -race -count=1 -timeout=3m ./...
+
+      - name: Build
+        run: go build ./...
