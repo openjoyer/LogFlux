@@ -65,7 +65,7 @@ func run() error {
 	})
 	defer redisClient.Close()
 
-	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	pingCtx, cancel := context.WithTimeout(ctx, cfg.Redis.PingTimeout)
 	err = redisClient.Ping(pingCtx).Err()
 	cancel()
 	if err != nil {
@@ -78,7 +78,7 @@ func run() error {
 	ingestionService := service.NewIngestionService(publisher)
 	handler := httptransport.NewHandler(ingestionService)
 
-	limiter := ratelimit.NewLimiter(redisClient, 100)
+	limiter := ratelimit.NewLimiter(redisClient, cfg.RateLimit.Limit)
 
 	common := func(next http.Handler) http.Handler {
 		return middleware.Chain(

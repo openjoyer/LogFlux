@@ -11,11 +11,12 @@ http:
 
 redis:
   address: ${REDIS_ADDRESS}
-  db: ${INGESTION_REDIS_DB}
   password: ${LOGFLUX_REDIS_PASSWORD}
-  dial_timeout: ${INGESTION_REDIS_DIAL_TIMEOUT}
-  read_timeout: ${INGESTION_REDIS_READ_TIMEOUT}
-  write_timeout: ${INGESTION_REDIS_WRITE_TIMEOUT}
+  db: 0
+  dial_timeout: 10ms
+  read_timeout: 10ms
+  write_timeout: 1s
+  ping_timeout: 5s
 
 kafka:
   brokers:
@@ -24,3 +25,6 @@ kafka:
   client_id: ${INGESTION_KAFKA_CLIENT_ID}
   batch_timeout: ${INGESTION_KAFKA_BATCH_TIMEOUT}
   write_timeout: ${INGESTION_KAFKA_WRITE_TIMEOUT}
+
+ratelimit:
+  limit: 100

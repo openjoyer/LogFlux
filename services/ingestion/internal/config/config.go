@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	HTTP     HTTPConfig     `yaml:"http"`
-	Kafka    KafkaConfig    `yaml:"kafka"`
-	Redis    RedisConfig    `yaml:"redis"`
-	Postgres PostgresConfig `yaml:"postgres"`
+	HTTP      HTTPConfig      `yaml:"http"`
+	Kafka     KafkaConfig     `yaml:"kafka"`
+	Redis     RedisConfig     `yaml:"redis"`
+	Postgres  PostgresConfig  `yaml:"postgres"`
+	RateLimit RateLimitConfig `yaml:"ratelimit"`
 }
 
 type KafkaConfig struct {
@@ -29,6 +30,7 @@ type RedisConfig struct {
 	DialTimeout  time.Duration `yaml:"dial_timeout"`
 	ReadTimeout  time.Duration `yaml:"read_timeout"`
 	WriteTimeout time.Duration `yaml:"write_timeout"`
+	PingTimeout  time.Duration `yaml:"ping_timeout"`
 	Password     string        `yaml:"password"`
 }
 
@@ -43,6 +45,10 @@ type PostgresConfig struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Database string `yaml:"database"`
+}
+
+type RateLimitConfig struct {
+	Limit int `yaml:"limit"`
 }
 
 func Load(path string) (Config, error) {
