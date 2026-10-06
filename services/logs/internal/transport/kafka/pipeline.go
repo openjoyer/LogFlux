@@ -62,7 +62,6 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	}()
 
 	go func() {
-		defer close(batches)
 		err := p.writeWorker(ctx, batches)
 		if err != nil {
 			cancel()

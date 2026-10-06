@@ -39,7 +39,7 @@ func (p *Pipeline) readBatch(ctx context.Context) (Batch, error) {
 		}
 
 		if len(batch.Messages) == 0 {
-			readCtx, cancel = context.WithTimeout(ctx, p.cfg.FlushInterval)
+			readCtx, cancel = context.WithTimeout(ctx, p.batchCfg.FlushInterval)
 		}
 
 		var event events.LogAccepted
@@ -54,6 +54,7 @@ func (p *Pipeline) readBatch(ctx context.Context) (Batch, error) {
 			EventID:    event.EventID,
 			ProjectID:  event.ProjectID,
 			Timestamp:  event.Timestamp,
+			ReceivedAt: event.AcceptedAt,
 			Service:    event.Service,
 			Level:      event.Level,
 			Message:    event.Message,
@@ -67,7 +68,7 @@ func (p *Pipeline) readBatch(ctx context.Context) (Batch, error) {
 			return Batch{}, ctx.Err()
 		}
 
-		if len(batch.Logs) >= p.cfg.MaxEvents || size >= p.cfg.MaxBytes || readCtx.Err() != nil {
+		if len(batch.Logs) >= p.batchCfg.MaxEvents || size >= p.batchCfg.MaxBytes || readCtx.Err() != nil {
 			return batch, nil
 		}
 	}
