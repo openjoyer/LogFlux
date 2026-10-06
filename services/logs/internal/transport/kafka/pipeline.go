@@ -27,14 +27,21 @@ type Consumer interface {
 type Pipeline struct {
 	consumer  Consumer
 	processor Processor
-	cfg       config.BatchConfig
+	batchCfg  config.BatchConfig
+	writerCfg config.WriterConfig
 }
 
-func NewPipeline(consumer Consumer, processor Processor, batchConfig config.BatchConfig) *Pipeline {
+func NewPipeline(
+	consumer Consumer,
+	processor Processor,
+	batchConfig config.BatchConfig,
+	writerConfig config.WriterConfig,
+) *Pipeline {
 	return &Pipeline{
 		consumer:  consumer,
 		processor: processor,
-		cfg:       batchConfig,
+		batchCfg:  batchConfig,
+		writerCfg: writerConfig,
 	}
 }
 
@@ -101,7 +108,7 @@ func (p *Pipeline) writeWorker(ctx context.Context, batches <-chan Batch) error 
 				return nil
 			}
 
-			if err := p.insertWithRetry(ctx, batch.Logs); err != nil {
+			if err := p.insertWithRetry(ctx, p.writerCfg, batch.Logs); err != nil {
 				return fmt.Errorf("insert batch: %w", err)
 			}
 
