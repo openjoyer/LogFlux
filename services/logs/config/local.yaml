@@ -1,0 +1,39 @@
+http:
+  address: ${LOGS_HTTP_ADDRESS}
+  port: ${LOGS_HTTP_PORT}
+
+kafka:
+  brokers:
+    - ${KAFKA_BROKER}
+  topic: ${KAFKA_TOPIC}
+  client_id: "logflux-logs-local"
+  group_id: "logflux-logs"
+  batch_timeout: ${LOGS_KAFKA_BATCH_TIMEOUT}
+  write_timeout: ${LOGS_KAFKA_WRITE_TIMEOUT}
+
+clickhouse:
+  addresses:
+    - ${CLICKHOUSE_ADDRESS}
+  database: ${LOGS_CLICKHOUSE_DB}
+  username: ${LOGS_CLICKHOUSE_USERNAME}
+  password: ${CLICKHOUSE_PASSWORD}
+  dial_timeout: 5s
+  read_timeout: 30s
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 10m
+  tls: false
+
+batch:
+  max_events: 5000
+  max_bytes: 8388608        # 8 MiB
+  flush_interval: 1s
+  queue_capacity: 2
+
+writer:
+  insert_timeout: 10s
+  max_attempts: 5
+  retry_initial_delay: 500ms
+  retry_max_delay: 5s
+
+shutdown_timeout: 30s
