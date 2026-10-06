@@ -21,6 +21,7 @@ type KafkaConfig struct {
 	Brokers      []string      `yaml:"brokers"`
 	Topic        string        `yaml:"topic"`
 	ClientID     string        `yaml:"client_id"`
+	GroupID      string        `yaml:"group_id"`
 	BatchTimeout time.Duration `yaml:"batch_timeout"`
 	WriteTimeout time.Duration `yaml:"write_timeout"`
 	MinBytes     int           `yaml:"min_bytes"`

@@ -2,11 +2,13 @@ package main
 
 import (
 	"LogFlux/services/logs/internal/config"
-	"LogFlux/services/logs/internal/repository/clickhouse"
+	"context"
 	"errors"
 	"flag"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -35,12 +37,25 @@ func run() error {
 		return err
 	}
 
-	slog.Info("configuration loaded", "kafka_topic", cfg.Kafka.Topic)
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
-	conn, err := clickhouse.NewClient(ctx, cfg.ClickHouse)
+	application, err := New(ctx, cfg)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-	return errors.New("Logs service is not implemented yet")
+
+	runErr := application.Run(ctx)
+
+	closeErr := application.Close()
+
+	if errors.Is(runErr, context.Canceled) && ctx.Err() != nil {
+		runErr = nil
+	}
+
+	return errors.Join(runErr, closeErr)
 }
