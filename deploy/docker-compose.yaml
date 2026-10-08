@@ -1,0 +1,129 @@
+services:
+#  alerting:
+#  projects:
+#  ingestion:
+  logs:
+    build:
+      context: ..
+      dockerfile: services/logs/Dockerfile
+    environment:
+      LOGS_HTTP_ADDRESS: "0.0.0.0"
+      LOGS_HTTP_PORT: "8080"
+      KAFKA_BROKER: kafka:19092
+      KAFKA_TOPIC: logflux.logs.accepted
+      LOGS_KAFKA_BATCH_TIMEOUT: "1s"
+      LOGS_KAFKA_WRITE_TIMEOUT: "10s"
+      CLICKHOUSE_ADDRESS: clickhouse:9000
+      LOGS_CLICKHOUSE_DB: logflux
+      LOGS_CLICKHOUSE_USERNAME: logflux
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set CLICKHOUSE_PASSWORD}
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      logs-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  logs-migrate:
+    build:
+      context: ../services/logs/migrations
+      dockerfile: Dockerfile
+    command:
+      - -path=/migrations
+      - "-database=clickhouse://clickhouse:9000?username=logflux&password=${CLICKHOUSE_PASSWORD:?set CLICKHOUSE_PASSWORD}&database=logflux"
+      - up
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: "no"
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8.33.6
+    environment:
+      CLICKHOUSE_DB: logflux
+      CLICKHOUSE_USER: logflux
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --host 127.0.0.1 --user \"$$CLICKHOUSE_USER\" --password \"$$CLICKHOUSE_PASSWORD\" --query \"SELECT 1\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  postgres:
+    image: postgres:latest
+    container_name: logflux-postgres
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: shop
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: shop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: loglux-kafka
+    ports:
+      - "127.0.0.1:9092:9092"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka:19092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  kafka-init:
+    image: apache/kafka:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/bin/sh", "/scripts/init-topics.sh"]
+    volumes:
+      - ./kafka/init-topics.sh:/scripts/init-topics.sh:ro
+    environment:
+      KAFKA_TOPICS_BIN: /opt/kafka/bin/kafka-topics.sh
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      KAFKA_REPLICATION_FACTOR: "1"
+      KAFKA_MIN_INSYNC_REPLICAS: "1"
+      KAFKA_TOPIC: logflux.logs.accepted
+      KAFKA_DLQ_TOPIC: logflux.processing.dlq
+      KAFKA_LOG_PARTITIONS: "6"
+      KAFKA_DLQ_PARTITIONS: "3"
+      KAFKA_LOG_RETENTION_MS: "259200000" # 3 days
+      KAFKA_DLQ_RETENTION_MS: "604800000" # 7 days
+
+
+volumes:
+  clickhouse_data:
+  postgres_data:
+  redis_data:
