@@ -12,6 +12,10 @@ import (
 )
 
 func (p *Pipeline) insertWithRetry(ctx context.Context, cfg config.WriterConfig, logs []model.Log) error {
+	if cfg.MaxAttempts < 1 {
+		return fmt.Errorf("max attempts must be positive")
+	}
+
 	delay := cfg.RetryInitialDelay
 
 	for attempt := 1; attempt <= cfg.MaxAttempts; attempt++ {
