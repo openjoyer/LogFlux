@@ -22,7 +22,7 @@ kafka:
   brokers:
     - ${KAFKA_BROKER}
   topic: ${KAFKA_TOPIC}
-  client_id: ${INGESTION_KAFKA_CLIENT_ID}
+  client_id: "logflux-ingestion-local"
   batch_timeout: ${INGESTION_KAFKA_BATCH_TIMEOUT}
   write_timeout: ${INGESTION_KAFKA_WRITE_TIMEOUT}
 

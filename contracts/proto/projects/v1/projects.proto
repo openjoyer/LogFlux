@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package projects.v1;
+
+option go_package = "LogFlux/contracts/gen/go/projects/v1;projectsv1";
