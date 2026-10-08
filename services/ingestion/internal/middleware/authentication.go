@@ -1,14 +1,14 @@
 package middleware
 
 import (
-	. "LogFlux/services/ingestion/internal/transport/http"
+	httptransport "LogFlux/services/ingestion/internal/transport/http"
 	"fmt"
 	"net/http"
 )
 
 func Authentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key, err := ExtractAPIKey(r)
+		key, err := httptransport.ExtractAPIKey(r)
 
 		if err != nil {
 			fmt.Println(key)
