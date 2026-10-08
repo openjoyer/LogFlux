@@ -3,13 +3,14 @@ module LogFlux/services/logs
 go 1.27
 
 require (
+	LogFlux/contracts v0.0.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.48.0
 	github.com/segmentio/kafka-go v0.4.51
 	go.yaml.in/yaml/v4 v4.0.0-rc.6
 )
 
 require (
 	github.com/ClickHouse/ch-go v0.74.0 // indirect
-	github.com/ClickHouse/clickhouse-go/v2 v2.48.0 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
@@ -24,3 +25,5 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 )
+
+replace LogFlux/contracts => ../../contracts

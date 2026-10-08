@@ -14,13 +14,6 @@ func (p *Pipeline) readBatch(ctx context.Context) (Batch, error) {
 	var size int
 
 	readCtx := ctx
-	var cancel context.CancelFunc
-
-	defer func() {
-		if cancel != nil {
-			cancel()
-		}
-	}()
 
 	for {
 		msg, err := p.consumer.Fetch(readCtx)
@@ -39,7 +32,9 @@ func (p *Pipeline) readBatch(ctx context.Context) (Batch, error) {
 		}
 
 		if len(batch.Messages) == 0 {
+			var cancel context.CancelFunc
 			readCtx, cancel = context.WithTimeout(ctx, p.batchCfg.FlushInterval)
+			defer cancel()
 		}
 
 		var event events.LogAccepted
