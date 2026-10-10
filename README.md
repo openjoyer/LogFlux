@@ -51,7 +51,7 @@ flowchart LR
 
 ## Приём логов
 
-Endpoint: `POST /api/v1/logs`. Аутентификация: `Authorization: Bearer <api-key>`.
+Endpoint: `POST /api/v1/logs`. Аутентификация: `Authorization: Bearer lfk_<id>.<secret>`.
 
 ```json
 {
