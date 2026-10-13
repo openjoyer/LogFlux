@@ -1,6 +1,9 @@
 grpc:
   address: "0.0.0.0:9090"
 
+auth:
+  session_ttl: 24h
+
 postgres:
   host: ${PROJECTS_POSTGRES_HOST}
   port: ${PROJECTS_POSTGRES_PORT}

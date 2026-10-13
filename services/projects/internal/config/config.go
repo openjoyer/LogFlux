@@ -11,7 +11,12 @@ import (
 type Config struct {
 	Grpc            GrpcConfig     `yaml:"grpc"`
 	Postgres        PostgresConfig `yaml:"postgres"`
+	Auth            AuthConfig     `yaml:"auth"`
 	ShutdownTimeout time.Duration  `yaml:"shutdown_timeout"`
+}
+
+type AuthConfig struct {
+	SessionTTL time.Duration `yaml:"session_ttl"`
 }
 
 type GrpcConfig struct {

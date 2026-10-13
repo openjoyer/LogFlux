@@ -28,6 +28,12 @@ type User struct {
 	UpdatedAt    time.Time
 }
 
+type Session struct {
+	UserID    uuid.UUID
+	TokenHash []byte
+	ExpiresAt time.Time
+}
+
 type TeamMemberShip struct {
 	TeamID   uuid.UUID
 	UserID   uuid.UUID
