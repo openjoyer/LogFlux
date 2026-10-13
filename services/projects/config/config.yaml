@@ -1,0 +1,15 @@
+grpc:
+  address: "0.0.0.0:9090"
+
+postgres:
+  host: ${PROJECTS_POSTGRES_HOST}
+  port: ${PROJECTS_POSTGRES_PORT}
+  database: logflux_projects
+  user: ${PROJECTS_POSTGRES_USER}
+  password: ${PROJECTS_POSTGRES_PASSWORD}
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 30m
+  connect_timeout: 5s
+
+shutdown_timeout: 30s
