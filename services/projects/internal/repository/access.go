@@ -19,6 +19,23 @@ func NewAccessRepository(pool *pgxpool.Pool) *AccessRepository {
 	return &AccessRepository{pool: pool}
 }
 
+func (r *AccessRepository) FindTeamRole(ctx context.Context, actorID, teamID uuid.UUID) (model.TeamRole, bool, error) {
+	var role model.TeamRole
+	err := r.pool.QueryRow(ctx, `
+		SELECT role
+		FROM team_memberships
+		WHERE team_id = $1 AND user_id = $2
+	`, teamID, actorID).Scan(&role)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("find team membership: %w", err)
+	}
+	return role, true, nil
+}
+
 func (r *AccessRepository) FindProjectRole(ctx context.Context, actorID, projectID uuid.UUID) (model.TeamRole, bool, error) {
 	var role model.TeamRole
 	err := r.pool.QueryRow(ctx, `

@@ -546,6 +546,8 @@ func writeServiceError(w http.ResponseWriter, err error) {
 			writeError(w, http.StatusNotFound, "not found")
 		case "already_exists":
 			writeError(w, http.StatusConflict, "already exists")
+		case "failed_precondition":
+			writeError(w, http.StatusConflict, "operation conflicts with current state")
 		default:
 			writeError(w, http.StatusInternalServerError, "internal server error")
 		}
