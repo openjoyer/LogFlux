@@ -63,7 +63,11 @@ func run() error {
 		ReadTimeout:  cfg.Redis.ReadTimeout,
 		WriteTimeout: cfg.Redis.WriteTimeout,
 	})
-	defer redisClient.Close()
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			slog.Warn("close Redis client", "error", err)
+		}
+	}()
 
 	pingCtx, cancel := context.WithTimeout(ctx, cfg.Redis.PingTimeout)
 	err = redisClient.Ping(pingCtx).Err()
@@ -73,7 +77,11 @@ func run() error {
 	}
 
 	publisher := producer.NewKafkaProducer(&cfg.Kafka)
-	defer publisher.Close()
+	defer func() {
+		if err := publisher.Close(); err != nil {
+			slog.Warn("close Kafka producer", "error", err)
+		}
+	}()
 
 	ingestionService := service.NewIngestionService(publisher)
 	handler := httptransport.NewHandler(ingestionService)
