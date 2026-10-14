@@ -8,6 +8,7 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -44,6 +45,9 @@ func (r *APIKeyRepository) FindAPIKey(ctx context.Context, keyID string) (*model
 		&key.CreatedAt,
 		&key.ExpiresAt,
 		&key.RevokedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("find api key: %w", err)
 	}
