@@ -69,7 +69,7 @@ func (r *TeamRepository) Create(ctx context.Context, actorID uuid.UUID, name str
 	if err != nil {
 		return nil, fmt.Errorf("begin create team: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	team, err := scanTeam(tx.QueryRow(ctx, `
 		INSERT INTO teams (name)
@@ -125,7 +125,7 @@ func (r *TeamRepository) AddMember(ctx context.Context, actorID, teamID, userID 
 	if err != nil {
 		return nil, fmt.Errorf("prepare add team member: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	member, err := scanTeamMember(tx.QueryRow(ctx, `
 		INSERT INTO team_memberships (team_id, user_id, role)
@@ -147,7 +147,7 @@ func (r *TeamRepository) UpdateMember(ctx context.Context, actorID, teamID, user
 	if err != nil {
 		return nil, fmt.Errorf("prepare update team member: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	currentRole, found, err := memberRoleForUpdate(ctx, tx, teamID, userID)
 	if err != nil {
@@ -183,7 +183,7 @@ func (r *TeamRepository) DeleteMember(ctx context.Context, actorID, teamID, user
 	if err != nil {
 		return false, fmt.Errorf("prepare delete team member: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	currentRole, found, err := memberRoleForUpdate(ctx, tx, teamID, userID)
 	if err != nil {

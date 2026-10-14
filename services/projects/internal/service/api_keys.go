@@ -222,14 +222,6 @@ func (s *APIKeyService) parseAPIKey(raw string) (keyID string, secret string, er
 	return id.String(), secret, nil
 }
 
-func (s *APIKeyService) validateSecret(key *model.APIKey, encodedSecret string) bool {
-	return api_key.VerifySecret(encodedSecret, key.KeyHash)
-}
-
-func (s *APIKeyService) validateScope(key *model.APIKey, scope string) bool {
-	return slices.Contains(key.Scopes, scope)
-}
-
 func normalizeScopes(scopes []string) ([]string, error) {
 	if len(scopes) == 0 {
 		return nil, ErrInvalidAPIKeyInput
