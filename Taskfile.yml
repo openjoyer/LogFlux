@@ -1,0 +1,132 @@
+version: '3'
+
+vars:
+  MODULES: contracts services/ingestion services/logs services/projects services/alerting
+  PROTOC_GEN_GO_VERSION: v1.36.6
+  PROTOC_GEN_GO_GRPC_VERSION: v1.5.1
+
+tasks:
+  default:
+    desc: Run all checks
+    cmds:
+      - task: check
+
+  deps:
+    desc: Download dependencies for every Go module
+    cmds:
+      - |
+        set -eu
+        for module in {{.MODULES}}; do
+          echo "Downloading $module"
+          (cd "$module" && GOWORK=off go mod download)
+        done
+
+  build:
+    desc: Build all runnable Go services
+    cmds:
+      - mkdir -p bin
+      - cd services/ingestion && GOWORK=off go build -mod=readonly -o ../../bin/ingestion ./cmd/server
+      - cd services/logs && GOWORK=off go build -mod=readonly -o ../../bin/logs ./cmd/server
+      - cd services/projects && GOWORK=off go build -mod=readonly -o ../../bin/projects ./cmd/server
+
+  test:
+    desc: Run tests with the race detector in every Go module
+    cmds:
+      - |
+        set -eu
+        for module in {{.MODULES}}; do
+          echo "Testing $module"
+          packages="$(cd "$module" && GOWORK=off go list ./...)"
+          if [ -n "$packages" ]; then
+            (cd "$module" && GOWORK=off go test -mod=readonly -race -count=1 -timeout=3m ./...)
+          fi
+        done
+
+  vet:
+    desc: Run go vet in every Go module
+    cmds:
+      - |
+        set -eu
+        for module in {{.MODULES}}; do
+          echo "Vetting $module"
+          packages="$(cd "$module" && GOWORK=off go list ./...)"
+          if [ -n "$packages" ]; then
+            (cd "$module" && GOWORK=off go vet -mod=readonly ./...)
+          fi
+        done
+
+  lint:
+    desc: Run golangci-lint in every Go module
+    cmds:
+      - |
+        set -eu
+        for module in {{.MODULES}}; do
+          echo "Linting $module"
+          packages="$(cd "$module" && GOWORK=off go list ./...)"
+          if [ -n "$packages" ]; then
+            (cd "$module" && GOWORK=off golangci-lint run --config "{{.ROOT_DIR}}/.golangci.yml" ./...)
+          fi
+        done
+
+  fmt:
+    desc: Format Go source files
+    cmds:
+      - gofmt -w services contracts
+
+  fmt:check:
+    desc: Check Go source formatting
+    cmds:
+      - |
+        files="$(gofmt -l services contracts)"
+        if [ -n "$files" ]; then
+          echo "Format these files with task fmt:"
+          echo "$files"
+          exit 1
+        fi
+
+  tidy:
+    desc: Tidy dependencies in every Go module
+    cmds:
+      - |
+        set -eu
+        for module in {{.MODULES}}; do
+          echo "Tidying $module"
+          (cd "$module" && GOWORK=off go mod tidy)
+        done
+
+  check:
+    desc: Check formatting, lint, test, and build
+    cmds:
+      - task: fmt:check
+      - task: lint
+      - task: test
+      - task: build
+
+  proto:install:
+    desc: Install pinned protobuf generators into bin/proto-tools
+    cmds:
+      - |
+        command -v go >/dev/null 2>&1 || { echo "Go is required"; exit 1; }
+        command -v protoc >/dev/null 2>&1 || { echo "protoc is required"; exit 1; }
+      - mkdir -p bin/proto-tools
+      - GOBIN="{{.ROOT_DIR}}/bin/proto-tools" GOWORK=off go install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
+      - GOBIN="{{.ROOT_DIR}}/bin/proto-tools" GOWORK=off go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
+
+  proto:
+    desc: Generate Go code from protobuf contracts
+    cmds:
+      - task: proto:install
+      - |
+        set -eu
+        set -- $(find contracts/proto -name '*.proto' -type f | sort)
+        if [ "$#" -eq 0 ]; then
+          echo "No proto files found"
+          exit 1
+        fi
+        mkdir -p contracts/gen/go
+        protoc -I contracts/proto \
+          --plugin=protoc-gen-go="{{.ROOT_DIR}}/bin/proto-tools/protoc-gen-go" \
+          --plugin=protoc-gen-go-grpc="{{.ROOT_DIR}}/bin/proto-tools/protoc-gen-go-grpc" \
+          --go_out=contracts/gen/go --go_opt=paths=source_relative \
+          --go-grpc_out=contracts/gen/go --go-grpc_opt=paths=source_relative \
+          "$@"
