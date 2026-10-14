@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	HTTP            HTTPConfig     `yaml:"http"`
 	Grpc            GrpcConfig     `yaml:"grpc"`
 	Postgres        PostgresConfig `yaml:"postgres"`
 	Auth            AuthConfig     `yaml:"auth"`
@@ -19,8 +20,22 @@ type AuthConfig struct {
 	SessionTTL time.Duration `yaml:"session_ttl"`
 }
 
-type GrpcConfig struct {
+type HTTPConfig struct {
 	Address string `yaml:"address"`
+}
+
+type GrpcConfig struct {
+	Address   string              `yaml:"address"`
+	Keepalive GrpcKeepaliveConfig `yaml:"keepalive"`
+}
+
+type GrpcKeepaliveConfig struct {
+	MaxConnIdle     time.Duration `yaml:"max_conn_idle"`
+	MaxConnAge      time.Duration `yaml:"max_conn_age"`
+	MaxConnAgeGrace time.Duration `yaml:"max_conn_age_grace"`
+	Time            time.Duration `yaml:"time"`
+	Timeout         time.Duration `yaml:"timeout"`
+	MinPingInterval time.Duration `yaml:"min_ping_interval"`
 }
 
 type PostgresConfig struct {

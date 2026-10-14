@@ -1,5 +1,14 @@
+http:
+  address: "0.0.0.0:8081"
 grpc:
   address: "0.0.0.0:9090"
+  keepalive:
+    max_conn_idle: 15m
+    max_conn_age: 30m
+    max_conn_age_grace: 30s
+    time: 5m
+    timeout: 10s
+    min_ping_interval: 5m
 
 auth:
   session_ttl: 24h

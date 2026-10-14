@@ -1,7 +1,6 @@
 package main
 
 import (
-	"LogFlux/services/projects/internal/config"
 	"context"
 	"errors"
 	"flag"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"LogFlux/services/projects/internal/config"
 )
 
 func main() {
@@ -50,7 +51,6 @@ func run() error {
 	}
 
 	runErr := application.Run(ctx)
-
 	closeErr := application.Close()
 
 	if errors.Is(runErr, context.Canceled) && ctx.Err() != nil {
