@@ -12,7 +12,6 @@ type Config struct {
 	HTTP      HTTPConfig      `yaml:"http"`
 	Kafka     KafkaConfig     `yaml:"kafka"`
 	Redis     RedisConfig     `yaml:"redis"`
-	Postgres  PostgresConfig  `yaml:"postgres"`
 	RateLimit RateLimitConfig `yaml:"ratelimit"`
 }
 
@@ -37,14 +36,6 @@ type RedisConfig struct {
 type HTTPConfig struct {
 	Address string `yaml:"address"`
 	Port    string `yaml:"port"`
-}
-
-type PostgresConfig struct {
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Database string `yaml:"database"`
 }
 
 type RateLimitConfig struct {

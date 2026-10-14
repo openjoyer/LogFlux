@@ -3,3 +3,17 @@ syntax = "proto3";
 package projects.v1;
 
 option go_package = "LogFlux/contracts/gen/go/projects/v1;projectsv1";
+
+message ValidateAPIKeyRequest {
+  string key = 1;
+  string required_scope = 2;
+}
+
+message ValidateAPIKeyResponse {
+  string project_id = 1;
+  string key_id = 2;
+}
+
+service ProjectAuthService {
+  rpc ValidateAPIKey(ValidateAPIKeyRequest) returns (ValidateAPIKeyResponse);
+}

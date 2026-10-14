@@ -1,0 +1,28 @@
+http:
+  address: ${PROJECTS_HTTP_ADDRESS}
+  port: ${PROJECTS_HTTP_PORT}
+grpc:
+  address: "0.0.0.0:9090"
+  keepalive:
+    max_conn_idle: 15m
+    max_conn_age: 30m
+    max_conn_age_grace: 30s
+    time: 5m
+    timeout: 10s
+    min_ping_interval: 5m
+
+auth:
+  session_ttl: 24h
+
+postgres:
+  host: ${PROJECTS_POSTGRES_HOST}
+  port: ${PROJECTS_POSTGRES_PORT}
+  database: logflux_projects
+  user: ${PROJECTS_POSTGRES_USER}
+  password: ${PROJECTS_POSTGRES_PASSWORD}
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 30m
+  connect_timeout: 5s
+
+shutdown_timeout: 30s
