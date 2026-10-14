@@ -4,11 +4,15 @@ import (
 	projectsv1 "LogFlux/contracts/gen/go/projects/v1"
 	"LogFlux/services/projects/cmd/di"
 	"LogFlux/services/projects/internal/config"
+	"LogFlux/services/projects/internal/interceptor"
+	"LogFlux/services/projects/internal/middleware"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -24,10 +28,19 @@ type App struct {
 }
 
 func New(ctx context.Context, cfg config.Config) (*App, error) {
+	if cfg.HTTP.Port < 1 || cfg.HTTP.Port > 65535 {
+		return nil, fmt.Errorf("invalid HTTP port: %d", cfg.HTTP.Port)
+	}
+
 	container, err := di.NewContainer(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create container: %w", err)
 	}
+
+	httpHandler := middleware.Logger(
+		slog.Default(),
+		middleware.Recover(slog.Default(), container.HTTPHandler()),
+	)
 
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -41,6 +54,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			MinTime:             cfg.Grpc.Keepalive.MinPingInterval,
 			PermitWithoutStream: true,
 		}),
+		grpc.ChainUnaryInterceptor(
+			interceptor.RecoverInterceptor(),
+			interceptor.LoggerInterceptor(),
+		),
 	)
 
 	projectsv1.RegisterProjectAuthServiceServer(
@@ -51,8 +68,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	return &App{
 		container: container,
 		httpServer: &http.Server{
-			Addr:              cfg.HTTP.Address,
-			Handler:           container.HTTPHandler(),
+			Addr:              net.JoinHostPort(cfg.HTTP.Address, strconv.Itoa(cfg.HTTP.Port)),
+			Handler:           httpHandler,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
 		grpcServer:      grpcServer,

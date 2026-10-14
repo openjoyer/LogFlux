@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"mime"
 	"net/http"
 	"strings"
@@ -71,7 +72,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.auth.Register(r.Context(), req.Email, req.Password)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if user == nil {
@@ -93,7 +94,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := h.auth.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if token == "" {
@@ -110,7 +111,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.auth.FindUser(r.Context(), actorID)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if user == nil {
@@ -127,7 +128,7 @@ func (h *Handler) FindAllTeams(w http.ResponseWriter, r *http.Request) {
 	}
 	teams, err := h.teams.FindAll(r.Context(), actorID)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	items := make([]teamDTO, 0, len(teams))
@@ -153,7 +154,7 @@ func (h *Handler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	}
 	team, err := h.teams.Create(r.Context(), actorID, req.Name)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if team == nil {
@@ -174,7 +175,7 @@ func (h *Handler) FindTeamMembers(w http.ResponseWriter, r *http.Request) {
 	}
 	members, err := h.teams.FindMembers(r.Context(), actorID, teamID)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	items := make([]memberDTO, 0, len(members))
@@ -204,7 +205,7 @@ func (h *Handler) AddTeamMember(w http.ResponseWriter, r *http.Request) {
 	}
 	member, err := h.teams.AddMember(r.Context(), actorID, teamID, userID, req.Role)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if member == nil {
@@ -237,7 +238,7 @@ func (h *Handler) UpdateTeamMember(w http.ResponseWriter, r *http.Request) {
 	}
 	member, err := h.teams.UpdateMember(r.Context(), actorID, teamID, userID, req.Role)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if member == nil {
@@ -261,7 +262,7 @@ func (h *Handler) DeleteTeamMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.teams.DeleteMember(r.Context(), actorID, teamID, userID); err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -278,7 +279,7 @@ func (h *Handler) FindAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 	projects, err := h.projects.FindAll(r.Context(), actorID, teamID)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	items := make([]projectDTO, 0, len(projects))
@@ -308,7 +309,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 	project, err := h.projects.Create(r.Context(), actorID, teamID, req.Name)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if project == nil {
@@ -329,7 +330,7 @@ func (h *Handler) FindProjectById(w http.ResponseWriter, r *http.Request) {
 	}
 	project, err := h.projects.FindByID(r.Context(), actorID, projectID)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if project == nil {
@@ -369,7 +370,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	}
 	project, err := h.projects.Update(r.Context(), actorID, projectID, req.Name, req.Status)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if project == nil {
@@ -403,7 +404,7 @@ func (h *Handler) CreateProjectAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 	key, rawKey, err := h.apiKeys.Create(r.Context(), actorID, projectID, req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	if key == nil || rawKey == "" {
@@ -426,7 +427,7 @@ func (h *Handler) GetProjectAPIKeys(w http.ResponseWriter, r *http.Request) {
 	}
 	keys, err := h.apiKeys.FindAll(r.Context(), actorID, projectID)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	items := make([]apiKeyDTO, 0, len(keys))
@@ -450,7 +451,7 @@ func (h *Handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.apiKeys.Revoke(r.Context(), actorID, projectID, keyID); err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -469,7 +470,7 @@ func (h *Handler) authenticate(w http.ResponseWriter, r *http.Request) (uuid.UUI
 	}
 	userID, err := h.auth.Authenticate(r.Context(), header[len(prefix):])
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return uuid.UUID{}, false
 	}
 	return userID, true
@@ -532,26 +533,35 @@ type codedError interface {
 	Code() string
 }
 
-func writeServiceError(w http.ResponseWriter, err error) {
+func writeServiceError(w http.ResponseWriter, r *http.Request, err error) {
+	statusCode := http.StatusInternalServerError
+	message := "internal server error"
+
 	var coded codedError
 	if errors.As(err, &coded) {
 		switch coded.Code() {
 		case "invalid_argument":
-			writeError(w, http.StatusBadRequest, "invalid request")
+			statusCode, message = http.StatusBadRequest, "invalid request"
 		case "unauthenticated":
-			writeError(w, http.StatusUnauthorized, "unauthorized")
+			statusCode, message = http.StatusUnauthorized, "unauthorized"
 		case "permission_denied":
-			writeError(w, http.StatusForbidden, "access denied")
+			statusCode, message = http.StatusForbidden, "access denied"
 		case "not_found":
-			writeError(w, http.StatusNotFound, "not found")
+			statusCode, message = http.StatusNotFound, "not found"
 		case "already_exists":
-			writeError(w, http.StatusConflict, "already exists")
+			statusCode, message = http.StatusConflict, "already exists"
 		case "failed_precondition":
-			writeError(w, http.StatusConflict, "operation conflicts with current state")
-		default:
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			statusCode, message = http.StatusConflict, "operation conflicts with current state"
 		}
-		return
 	}
-	writeError(w, http.StatusInternalServerError, "internal server error")
+
+	if statusCode == http.StatusInternalServerError {
+		slog.ErrorContext(r.Context(), "http_service_error",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"error", err,
+		)
+	}
+
+	writeError(w, statusCode, message)
 }

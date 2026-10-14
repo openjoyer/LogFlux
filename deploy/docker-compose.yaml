@@ -41,6 +41,8 @@ services:
       context: ..
       dockerfile: services/projects/Dockerfile
     environment:
+      PROJECTS_HTTP_ADDRESS: "0.0.0.0"
+      PROJECTS_HTTP_PORT: "8081"
       PROJECTS_POSTGRES_HOST: postgres
       PROJECTS_POSTGRES_PORT: "5432"
       PROJECTS_POSTGRES_USER: logflux_projects

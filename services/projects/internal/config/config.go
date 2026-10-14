@@ -22,6 +22,7 @@ type AuthConfig struct {
 
 type HTTPConfig struct {
 	Address string `yaml:"address"`
+	Port    int    `yaml:"port"`
 }
 
 type GrpcConfig struct {

@@ -1,5 +1,6 @@
 http:
-  address: "0.0.0.0:8081"
+  address: ${PROJECTS_HTTP_ADDRESS}
+  port: ${PROJECTS_HTTP_PORT}
 grpc:
   address: "0.0.0.0:9090"
   keepalive:
